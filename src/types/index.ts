@@ -9,11 +9,9 @@ export interface Project {
 
 export interface Task {
   id: string;
-  name: string;
-  project: {
-    id: string;
-    name: string;
-  };
+  title: string;
+  projectid: string;
+  project: string;
 }
 
 export interface TaskMatch {

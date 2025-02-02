@@ -259,7 +259,7 @@ export function MeetingMatches({
           console.log('Processing task:', task);
           
           // Ensure task has required fields
-          const hasRequiredFields = task.id && task.name && task.project?.id;
+          const hasRequiredFields = task.id && task.title && task.project && task.projectid;
           
           if (!hasRequiredFields) {
             console.log('Skipping task due to missing required fields:', task);
@@ -267,26 +267,16 @@ export function MeetingMatches({
           
           return hasRequiredFields;
         })
-        .map(task => {
-          // Get project ID from project object
-          const projectId = task.project?.id;
-          
-          // Get project name from project object or use default
-          const projectName = task.project?.name || 'Unknown Project';
-          
-          const taskMatch: TaskMatch = {
-            taskId: task.id,
-            taskName: task.name,
-            projectid: projectId,
-            projectName,
-            confidence: 0,
-            matchReason: 'Manually selected'
-          };
-          
-          console.log('Created task match:', taskMatch);
-          return taskMatch;
-        });
+        .map(task => ({
+          taskId: task.id,
+          taskName: task.title,
+          projectid: String(task.projectid),  // Convert to string to match TaskMatch type
+          projectName: String(task.project),  // Convert to string to match TaskMatch type
+          confidence: 0,
+          matchReason: 'Manually selected'
+        }));
 
+      console.log('Final available tasks:', taskMatches);
       setAvailableTasks(taskMatches);
       setShowTaskModal(true);
     } catch (error) {
@@ -337,7 +327,7 @@ export function MeetingMatches({
           console.log('Processing task:', task);
           
           // Ensure task has required fields
-          const hasRequiredFields = task.id && task.name && task.project?.id;
+          const hasRequiredFields = task.id && task.title && task.project && task.projectid;
           
           if (!hasRequiredFields) {
             console.log('Skipping task due to missing required fields:', task);
@@ -345,25 +335,14 @@ export function MeetingMatches({
           
           return hasRequiredFields;
         })
-        .map(task => {
-          // Get project ID from project object
-          const projectId = task.project?.id;
-          
-          // Get project name from project object or use default
-          const projectName = task.project?.name || 'Unknown Project';
-          
-          const taskMatch: TaskMatch = {
-            taskId: task.id,
-            taskName: task.name,
-            projectid: projectId,
-            projectName,
-            confidence: 0,
-            matchReason: 'Manually selected'
-          };
-          
-          console.log('Created task match:', taskMatch);
-          return taskMatch;
-        });
+        .map(task => ({
+          taskId: task.id,
+          taskName: task.title,
+          projectid: String(task.projectid),  // Convert to string to match TaskMatch type
+          projectName: String(task.project),  // Convert to string to match TaskMatch type
+          confidence: 0,
+          matchReason: 'Manually selected'
+        }));
 
       console.log('Final available tasks:', taskMatches);
       setAvailableTasks(taskMatches);
@@ -647,7 +626,7 @@ export function MeetingMatches({
                                 ) : (
                                   <>
                                     <Check className="h-4 w-4 mr-2" />
-                                    Confirm Match
+                                    Post to Interval
                                   </>
                                 )}
                               </Button>
