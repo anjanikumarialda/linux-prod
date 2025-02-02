@@ -106,12 +106,19 @@ export class AzureOpenAIService {
                    Task: taskId - Confidence: number - Reason: brief explanation
                    
                    Rules:
-                   1. Only return matches with confidence > 30
+                   1. Only return matches with confidence > 70
                    2. List matches in order of confidence (highest first)
                    3. Return at most 3 matches
                    4. Each match MUST be on a new line
                    5. Use EXACTLY the format specified above (confidence should be a number without % symbol)
-                   6. Only return the matches, no other text`
+                   6. Only return the matches, no other text
+                   7. IMPORTANT: Only match tasks that are semantically related to the meeting subject
+                   8. If no task is clearly related to the meeting, return no matches
+                   9. Meeting subjects about general topics (like "time zone", "status update", etc.) should NOT match with specific project tasks unless explicitly mentioned
+                   10. Project codes or acronyms (like "WD", "PM", etc.) in task names should NOT be considered matches unless the meeting subject explicitly mentions the same project code
+                   11. The presence of a project code in a task name is NOT sufficient for a match - the meeting subject must be semantically related to the task's actual purpose
+                   12. The confidence score should reflect how closely the meeting subject relates to the task's specific purpose, not just matching keywords
+                   13. For any match with project-specific tasks (like WD tasks), the meeting subject MUST explicitly reference that project or its full name`
         },
         {
           role: 'user',
@@ -123,6 +130,7 @@ export class AzureOpenAIService {
                    Available Tasks:
                    ${JSON.stringify(availableTasks, null, 2)}
                    
+                   Remember: Do NOT match based on project codes (like WD) unless the meeting explicitly mentions that project.
                    Return the best matching tasks using the required format.`
         }
       ];

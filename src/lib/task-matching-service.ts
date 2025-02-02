@@ -10,6 +10,15 @@ interface ParsedMatch {
   reason: string;
 }
 
+interface OpenAITask {
+  id: string;
+  name: string;
+  project: {
+    id: string;
+    name: string;
+  };
+}
+
 export class TaskMatchingService {
   private openAIService: AzureOpenAIService;
   private intervalsAPI: IntervalsAPI;
@@ -79,7 +88,14 @@ export class TaskMatchingService {
           this.intervalsAPI.getTasks(),
           this.intervalsAPI.getProjects()
         ]);
-        this.tasks = tasksResponse;
+        
+        // Ensure consistent task structure
+        this.tasks = tasksResponse.map(task => ({
+          id: task.id,
+          title: task.title || (task as any).name,  // Handle potential API response variation
+          projectid: task.projectid || (task as any).project?.id,
+          project: task.project || ''
+        }));
         this.projects = projectsResponse;
       }
     } catch (error) {
@@ -99,8 +115,7 @@ export class TaskMatchingService {
     }
     console.log('Found task:', task);
 
-    // Handle both API response structure (projectid) and our Task interface (project)
-    const projectId = 'projectid' in task ? (task as any).projectid : (task as Task).project?.id;
+    const projectId = task.projectid;
     if (!projectId) {
       console.warn(`Task ${task.id} has no project information`);
       return null;
@@ -116,11 +131,22 @@ export class TaskMatchingService {
 
     return {
       taskId: task.id,
-      taskName: 'title' in task ? (task as any).title : (task as Task).name,
+      taskName: task.title,
       projectid: project.id,
       projectName: project.name,
       confidence: parsedMatch.confidence,
       matchReason: parsedMatch.reason
+    };
+  }
+
+  private mapTaskToOpenAIFormat(task: Task): OpenAITask {
+    return {
+      id: task.id,
+      name: task.title,
+      project: {
+        id: task.projectid,
+        name: this.projects.find(p => p.id === task.projectid)?.name || ''
+      }
     };
   }
 
@@ -133,7 +159,8 @@ export class TaskMatchingService {
         projectsCount: this.projects.length
       });
 
-      const openAIResponse = await this.openAIService.matchMeetingWithTask(meeting, this.tasks);
+      const openAITasks = this.tasks.map(task => this.mapTaskToOpenAIFormat(task));
+      const openAIResponse = await this.openAIService.matchMeetingWithTask(meeting, openAITasks);
       console.log('Raw OpenAI Response:', openAIResponse);
       
       const parsedMatches = this.parseOpenAIResponse(openAIResponse);
@@ -216,7 +243,7 @@ export class TaskMatchingService {
     const task = this.tasks.find(t => t.id === taskId);
     if (!task) return null;
 
-    const project = this.projects.find(p => p.id === task.project.id);
+    const project = this.projects.find(p => p.id === task.projectid);
     if (!project) return null;
 
     return { task, project };
