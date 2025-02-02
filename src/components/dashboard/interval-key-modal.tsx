@@ -155,16 +155,34 @@ export function IntervalKeyModal({ open, onOpenChange }: IntervalKeyModalProps) 
                 An API key is required to use this application.
               </div>
               <div className="mt-2 space-y-3 rounded-md bg-muted p-4 text-sm">
-                <div>
-                  Get your API key from{" "}
-                  <a 
-                    href="https://nathcorp1.intervalsonline.com/account/api/" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-primary hover:underline font-medium"
-                  >
-                    Intervals API Access Page
-                  </a>
+                <div className="space-y-2">
+                  <p className="font-medium">Follow these steps to get your API key:</p>
+                  <ol className="list-decimal list-inside space-y-1 ml-1">
+                    <li>Go to Intervals and log into your account</li>
+                    <li>Navigate to My Account</li>
+                    <li>Find API Access under Options</li>
+                    <li>Generate or view your API token (11-character code like: a78828gq6t4) or regenerate your API token</li>
+                    <li>Copy and paste your token below</li>
+                  </ol>
+                  <div className="relative my-4">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-muted-foreground/20"></span>
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-muted px-2 text-muted-foreground font-semibold">OR</span>
+                    </div>
+                  </div>
+                  <p>
+                    Get your API key directly from{" "}
+                    <a 
+                      href="https://nathcorp1.intervalsonline.com/account/api/" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Intervals API Access Page
+                    </a>
+                  </p>
                 </div>
               </div>
             </div>
