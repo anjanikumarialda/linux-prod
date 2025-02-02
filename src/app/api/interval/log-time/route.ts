@@ -55,7 +55,7 @@ export async function POST(request: Request) {
                 billable: true,
                 taskid: timeEntry.taskId,
                 projectid: timeEntry.projectId,
-                worktypeid: 800360, // Admin worktype
+                worktypeid: 801197, // Admin worktype
                 personid: personId
             })
         });

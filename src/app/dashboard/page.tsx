@@ -485,7 +485,7 @@ export default function DashboardPage() {
           {meetings.length > 0 && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-semibold tracking-tight">Meetings</h2>
+                <h2 className="text-2xl font-semibold tracking-tight">Fetched Meetings</h2>
                 <Button
                   onClick={handleMatchMeetings}
                   disabled={isMatching}

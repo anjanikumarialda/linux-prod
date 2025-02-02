@@ -534,10 +534,11 @@ export function MeetingMatches({
                   )}
                 </Button>
               </TableHead>
-              <TableHead className="w-[300px]">Meeting</TableHead>
-              <TableHead>Date & Time</TableHead>
-              <TableHead>Duration</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="w-[180px]">Meeting</TableHead>
+              <TableHead className="w-[220px]">Date & Time</TableHead>
+              <TableHead className="w-[180px]">Duration</TableHead>
+              <TableHead className="w-[200px]">Task</TableHead>
+              <TableHead className="w-[100px]">Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -571,39 +572,45 @@ export function MeetingMatches({
                     </TableCell>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          className="p-0"
-                          onClick={() => toggleMeeting(meeting.meeting.id)}
-                        >
-                          {isExpanded ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )}
-                        </Button>
                         <span>{meeting.meeting.subject}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
-                          <span>{format(startTime, 'MMM dd, yyyy')}</span>
+                          <span>{format(startTime, 'MMM dd, yyyy')} IST</span>
                         </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
+                        <div className="flex items-center gap-1 text-muted-foreground">
                           <Clock className="h-4 w-4" />
-                          <span>
-                            {format(startTime, 'hh:mm a')} - {format(endTime, 'hh:mm a')}
-                          </span>
+                          <span>{format(startTime, 'hh:mm a')} - {format(endTime, 'hh:mm a')} IST</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <div>
+                          <span>Scheduled: </span>
+                          <span>{meeting.meeting.scheduledDuration}</span>
+                        </div>
+                        <div className="text-muted-foreground whitespace-nowrap">
+                          <span>Actual: </span>
+                          <span>{meeting.meeting.actualAttendance}</span>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
-                        <span>{meeting.meeting.scheduledDuration}</span>
-                        <span className="text-muted-foreground">{meeting.meeting.actualAttendance}</span>
+                        {isMatched && meeting.matches[0] ? (
+                          <>
+                            <div className="font-medium">{meeting.matches[0].taskName}</div>
+                            <div className="text-sm text-muted-foreground">
+                              Project: {meeting.matches[0].projectName}
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground">No task selected</span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -625,10 +632,7 @@ export function MeetingMatches({
                               <PencilLine className="h-4 w-4 mr-2" />
                               Change Match
                             </Button>
-                            <Button variant="secondary" size="sm" onClick={() => toggleMeeting(meeting.meeting.id)}>
-                              {isExpanded ? 'Hide Matches' : 'View Matches'}
-                            </Button>
-                            {meeting.matches[0]?.matchReason === 'Manually selected' && (
+                            {meeting.matches[0] && (
                               <Button 
                                 variant="default" 
                                 size="sm" 
@@ -658,59 +662,6 @@ export function MeetingMatches({
                       </div>
                     </TableCell>
                   </TableRow>
-                  {isExpanded && (
-                    <TableRow className="bg-muted/50">
-                      <TableCell colSpan={6} className="p-0">
-                        <div className="p-4">
-                          <h4 className="font-medium mb-2">Suggested Tasks for {meeting.meeting.subject}</h4>
-                          <div className="space-y-3">
-                            {meeting.matches.map((match) => (
-                              <div
-                                key={match.taskId}
-                                className="flex items-center justify-between p-3 rounded-lg border bg-background"
-                              >
-                                <div className="space-y-1">
-                                  <div className="font-medium">{match.taskName}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    Project: {match.projectName}
-                                  </div>
-                                  {match.matchReason && (
-                                    <div className="text-sm text-muted-foreground">
-                                      Reason: {match.matchReason}
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <Badge variant={getConfidenceBadgeVariant(match.confidence)}>
-                                    <Percent className="h-3 w-3 mr-1" />
-                                    {match.confidence}%
-                                  </Badge>
-                                  <Button
-                                    variant="default"
-                                    size="sm"
-                                    onClick={() => handleConfirmMatch(meeting, match.taskId)}
-                                    disabled={processingMeetings.has(meeting.meeting.id)}
-                                  >
-                                    {processingMeetings.has(meeting.meeting.id) ? (
-                                      <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                        Confirming...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Check className="h-4 w-4 mr-2" />
-                                        Confirm Match
-                                      </>
-                                    )}
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
                 </React.Fragment>
               );
             })}
