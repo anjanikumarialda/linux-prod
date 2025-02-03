@@ -65,7 +65,20 @@ export const cacheLastMeeting = (meeting: Meeting) => {
 export const getLastMeetingFromCache = () => {
   try {
     const cached = sessionStorage.getItem(LAST_MEETING_CACHE_KEY);
-    return cached ? JSON.parse(cached) : null;
+    if (!cached) return null;
+    
+    const data = JSON.parse(cached);
+    // Check if cache is older than 5 minutes
+    const cacheTime = new Date(data.timestamp).getTime();
+    const now = new Date().getTime();
+    const fiveMinutes = 5 * 60 * 1000;
+    
+    if (now - cacheTime > fiveMinutes) {
+      sessionStorage.removeItem(LAST_MEETING_CACHE_KEY);
+      return null;
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error getting last meeting from cache:', error);
     return null;

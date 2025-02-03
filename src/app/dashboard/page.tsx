@@ -29,6 +29,7 @@ export default function DashboardPage() {
   const [matchingResult, setMatchingResult] = useState<MatchingResult | null>(null);
   const [isMatching, setIsMatching] = useState(false);
   const [lastPostedMeeting, setLastPostedMeeting] = useState<Meeting | null>(null);
+  const [lastPostedError, setLastPostedError] = useState<string | null>(null);
 
   const {
     isLoading: isComparing,
@@ -47,12 +48,20 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchLastPostedMeeting = async () => {
-      if (!session?.user?.email) return;
+      if (!session?.user?.email) {
+        console.log('No user email found');
+        return;
+      }
 
       const intervalsKey = getIntervalsApiKey(session.user.email);
-      if (!intervalsKey) return;
+      if (!intervalsKey) {
+        console.log('No intervals key found');
+        return;
+      }
 
       try {
+        setLastPostedError(null);
+        console.log('Fetching last posted meeting...');
         const response = await fetch(
           `/api/meetings/latest?userEmail=${encodeURIComponent(session.user.email)}&intervalsKey=${encodeURIComponent(intervalsKey)}`
         );
@@ -62,18 +71,26 @@ export default function DashboardPage() {
         }
 
         const meeting = await response.json();
+        console.log('Last posted meeting response:', meeting);
+        
         if (meeting) {
+          console.log('Setting last posted meeting:', meeting);
           setLastPostedMeeting(meeting);
           cacheLastMeeting(meeting);
+        } else {
+          console.log('No last posted meeting found');
         }
       } catch (error) {
         console.error('Error fetching last posted meeting:', error);
+        setLastPostedError(error instanceof Error ? error.message : 'Failed to fetch last posted meeting');
       }
     };
 
     // Load from cache first
     const cached = getLastMeetingFromCache();
+    console.log('Cached meeting:', cached);
     if (cached?.meeting) {
+      console.log('Setting meeting from cache:', cached.meeting);
       setLastPostedMeeting(cached.meeting);
     }
 
@@ -82,7 +99,9 @@ export default function DashboardPage() {
 
     // Setup event listener for real-time updates
     const handleMeetingPosted = (event: CustomEvent<{ meeting: Meeting }>) => {
+      console.log('Meeting posted event received:', event.detail);
       setLastPostedMeeting(event.detail.meeting);
+      setLastPostedError(null);
     };
 
     window.addEventListener('meetingPosted', handleMeetingPosted as EventListener);
@@ -433,18 +452,18 @@ export default function DashboardPage() {
   return (
     <>
       <div className="container mx-auto py-6">
-        {lastPostedMeeting && (
+        {lastPostedMeeting ? (
           <div className="fixed top-[4.5rem] right-4 z-10">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-background/80 backdrop-blur-sm border rounded-md text-xs shadow-sm">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-background/95 backdrop-blur-sm border rounded-md text-xs shadow-sm hover:bg-background/100 transition-colors">
               <div className="flex items-center gap-2">
                 <div className="relative">
-                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                  <div className="absolute inset-0 w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <div className="absolute inset-0 w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
                 </div>
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Last Posted:</span>
-                    <span className="truncate max-w-[150px]" title={lastPostedMeeting.subject}>
+                    <span className="truncate max-w-[200px]" title={lastPostedMeeting.subject}>
                       {lastPostedMeeting.subject}
                     </span>
                   </div>
@@ -452,6 +471,24 @@ export default function DashboardPage() {
                     {formatToIST(lastPostedMeeting.start.dateTime)}
                   </span>
                 </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="fixed top-[4.5rem] right-4 z-10">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-background/95 backdrop-blur-sm border rounded-md text-xs shadow-sm">
+              <span className="text-muted-foreground">No recently posted meetings</span>
+            </div>
+          </div>
+        )}
+        {lastPostedError && (
+          <div className="fixed top-[4.5rem] right-4 z-10">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 backdrop-blur-sm border-destructive/20 border rounded-md text-xs text-destructive shadow-sm">
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <div className="w-2 h-2 bg-destructive rounded-full"></div>
+                </div>
+                <span>{lastPostedError}</span>
               </div>
             </div>
           </div>
