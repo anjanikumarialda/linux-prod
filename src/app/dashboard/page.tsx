@@ -62,6 +62,16 @@ export default function DashboardPage() {
       try {
         setLastPostedError(null);
         console.log('Fetching last posted meeting...');
+        
+        // First try to get from cache
+        const cached = getLastMeetingFromCache();
+        console.log('Cached meeting:', cached);
+        if (cached?.meeting) {
+          console.log('Setting meeting from cache:', cached.meeting);
+          setLastPostedMeeting(cached.meeting);
+        }
+
+        // Then fetch from API regardless of cache to ensure we have the latest
         const response = await fetch(
           `/api/meetings/latest?userEmail=${encodeURIComponent(session.user.email)}&intervalsKey=${encodeURIComponent(intervalsKey)}`
         );
@@ -77,8 +87,10 @@ export default function DashboardPage() {
           console.log('Setting last posted meeting:', meeting);
           setLastPostedMeeting(meeting);
           cacheLastMeeting(meeting);
-        } else {
+        } else if (!cached?.meeting) {
+          // Only show no meetings message if we don't have a cached meeting
           console.log('No last posted meeting found');
+          setLastPostedMeeting(null);
         }
       } catch (error) {
         console.error('Error fetching last posted meeting:', error);
@@ -86,16 +98,11 @@ export default function DashboardPage() {
       }
     };
 
-    // Load from cache first
-    const cached = getLastMeetingFromCache();
-    console.log('Cached meeting:', cached);
-    if (cached?.meeting) {
-      console.log('Setting meeting from cache:', cached.meeting);
-      setLastPostedMeeting(cached.meeting);
-    }
-
-    // Then fetch from API
+    // Fetch immediately on mount
     fetchLastPostedMeeting();
+
+    // Also set up an interval to fetch every minute
+    const intervalId = setInterval(fetchLastPostedMeeting, 60000);
 
     // Setup event listener for real-time updates
     const handleMeetingPosted = (event: CustomEvent<{ meeting: Meeting }>) => {
@@ -108,6 +115,7 @@ export default function DashboardPage() {
     
     return () => {
       window.removeEventListener('meetingPosted', handleMeetingPosted as EventListener);
+      clearInterval(intervalId);
     };
   }, [session?.user?.email]);
 
@@ -137,12 +145,15 @@ export default function DashboardPage() {
       const intervalsApi = new IntervalsAPI(apiKey);
       await intervalsApi.logMeetings(meetingsToLog);
 
+      // Find the most recent meeting
       const mostRecentMeeting = meetingsToLog.reduce((latest, current) => {
         return new Date(current.start.dateTime) > new Date(latest.start.dateTime) 
           ? current 
           : latest;
       }, meetingsToLog[0]);
       
+      // Update the last posted meeting immediately
+      setLastPostedMeeting(mostRecentMeeting);
       cacheLastMeeting(mostRecentMeeting);
 
       // Refresh the meetings list
@@ -312,7 +323,8 @@ export default function DashboardPage() {
       // Log the time entry to Intervals
       await intervalsApi.logTimeEntry(timeEntry);
 
-      // Update last posted meeting
+      // Update last posted meeting immediately
+      setLastPostedMeeting(meeting.meeting);
       cacheLastMeeting(meeting.meeting);
 
       // Update the matching result to reflect the logged meeting

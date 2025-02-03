@@ -15,14 +15,14 @@ I'll help you deploy your web app to Azure using Azure CLI. However, I notice th
 Instead, I'll guide you through the secure way to deploy your app:
 
 1. First, login to Azure CLI:
-```bash
+```bash:azure-deployment-guide.md
 az login
 ```
 
 2. Create a resource group if you don't have one:
 ```bash
 az group create --name your-resource-group-name --location eastus2
-```
+```azure-deployment-guide.md
 
 3. Create an App Service plan:
 ```bash
@@ -483,6 +483,132 @@ az webapp config appsettings list --resource-group linux-prod --name linux-prod
 ```
 
 This guide includes all commands used in the deployment process, along with additional useful commands for monitoring and troubleshooting. The commands are organized by function and include notes about the environment and configuration.
+
+---
+
+_**User**_
+
+azure open ai has request limitation if we use local llm can it will be resolved our issue ?
+
+---
+
+_**Assistant**_
+
+Yes, using a local LLM could help resolve the Azure OpenAI API request limitations. Here are the main benefits and options:
+
+1. **Ollama Models**
+- No API rate limits
+- Free to use
+- Can run completely offline
+- Models like Mistral, Llama2, or CodeLlama would work well
+- Example setup:
+```python
+from langchain.llms import Ollama
+
+llm = Ollama(model="mistral")  # or "codellama" for code-specific tasks
+```
+
+2. **LocalAI**
+- Open source alternative to OpenAI API
+- Compatible with OpenAI API format
+- Can run various open source models
+- Example setup:
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:8080/v1",  # LocalAI endpoint
+    api_key="not-needed"
+)
+```
+
+3. **LM Studio**
+- GUI application for running LLMs locally
+- Provides API endpoint compatible with OpenAI format
+- Easy model management
+- Example setup:
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:1234/v1",  # LM Studio endpoint
+    api_key="not-needed"
+)
+```
+
+Key Considerations:
+1. Hardware Requirements:
+   - Minimum 16GB RAM
+   - Good GPU recommended for better performance
+   - SSD storage for models
+
+2. Model Selection:
+   - Mistral 7B - Good all-round performance
+   - CodeLlama - Better for code-related tasks
+   - Llama2 - Good balance of performance and resource usage
+
+3. Limitations:
+   - May not match GPT-4 quality
+   - Requires local computing resources
+   - Initial setup time needed
+
+Would you like me to provide more details about implementing any of these solutions in your current setup?
+
+---
+
+_**User**_
+
+as we are using azure web app so how can i add local llm you have any idea ?
+
+---
+
+_**Assistant**_
+
+
+
+When using Azure Web App (which is serverless), we have a few options to integrate local LLMs:
+
+1. **Azure Container Apps** (Recommended Approach):
+```bash
+# Create Container App Environment
+az containerapp env create \
+  --name linux-prod-env \
+  --resource-group linux-prod \
+  --location eastus2
+
+# Create Container App with Ollama
+az containerapp create \
+  --name linux-prod-llm \
+  --resource-group linux-prod \
+  --environment linux-prod-env \
+  --image ollama/ollama \
+  --target-port 11434 \
+  --ingress external \
+  --cpu 2 \
+  --memory 4Gi
+```
+
+2. **Azure Container Instances**:
+```bash
+# Create Container Instance
+az container create \
+  --resource-group linux-prod \
+  --name linux-prod-llm \
+  --image ollama/ollama \
+  --cpu 2 \
+  --memory 4 \
+  --ports 11434 \
+  --dns-name-label linux-prod-llm \
+  --location eastus2
+```
+
+Then modify your web app code to connect to the container:
+```typescript
+// Example using Ollama API
+const response = await fetch('https://linux-prod-llm.eastus2.azurecontainer.io:11434/api/generate', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  
 
 ---
 

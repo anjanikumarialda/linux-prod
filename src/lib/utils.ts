@@ -54,7 +54,7 @@ export const cacheLastMeeting = (meeting: Meeting) => {
       meeting,
       timestamp: new Date().toISOString()
     };
-    sessionStorage.setItem(LAST_MEETING_CACHE_KEY, JSON.stringify(cached));
+    localStorage.setItem(LAST_MEETING_CACHE_KEY, JSON.stringify(cached));
     // Dispatch a custom event for real-time updates
     window.dispatchEvent(new CustomEvent('meetingPosted', { detail: cached }));
   } catch (error) {
@@ -64,17 +64,17 @@ export const cacheLastMeeting = (meeting: Meeting) => {
 
 export const getLastMeetingFromCache = () => {
   try {
-    const cached = sessionStorage.getItem(LAST_MEETING_CACHE_KEY);
+    const cached = localStorage.getItem(LAST_MEETING_CACHE_KEY);
     if (!cached) return null;
     
     const data = JSON.parse(cached);
-    // Check if cache is older than 5 minutes
+    // Check if cache is older than 24 hours
     const cacheTime = new Date(data.timestamp).getTime();
     const now = new Date().getTime();
-    const fiveMinutes = 5 * 60 * 1000;
+    const twentyFourHours = 24 * 60 * 60 * 1000;
     
-    if (now - cacheTime > fiveMinutes) {
-      sessionStorage.removeItem(LAST_MEETING_CACHE_KEY);
+    if (now - cacheTime > twentyFourHours) {
+      localStorage.removeItem(LAST_MEETING_CACHE_KEY);
       return null;
     }
     
